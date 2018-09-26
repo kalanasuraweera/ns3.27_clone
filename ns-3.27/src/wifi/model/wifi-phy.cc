@@ -32,6 +32,8 @@
 #include "wifi-utils.h"
 #include "frame-capture-model.h"
 
+#include "ns3/timestamp-tag.h"
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("WifiPhy");
@@ -1475,7 +1477,7 @@ WifiPhy::SetChannelNumber (uint8_t nch)
     {
       if (DoChannelSwitch (nch))
         {
-          NS_LOG_DEBUG ("Setting frequency to " << f.first << "; width to " << (uint16_t)f.second);
+          NS_LOG_DEBUG (Simulator::Now().GetSeconds()<<" Setting frequency to " << f.first << "; width to " << (uint16_t)f.second);
           m_channelCenterFrequency = f.first;
           SetChannelWidth (f.second);
           m_channelNumber = nch;
@@ -2366,6 +2368,10 @@ WifiPhy::SendPacket (Ptr<const Packet> packet, WifiTxVector txVector, MpduType m
   newPacket->RemovePacketTag (oldtag);
   WifiPhyTag tag (txVector, mpdutype);
   newPacket->AddPacketTag (tag);
+
+  TimestampTag timestamp;
+  timestamp.SetTimestamp (Simulator::Now ());
+  newPacket->AddByteTag (timestamp);
 
   StartTx (newPacket, txVector, txDuration);
 }

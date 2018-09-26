@@ -239,6 +239,22 @@ Simulator::Stop (void)
 }
 
 void 
+Simulator::Pause (void)
+{
+  NS_LOG_FUNCTION_NOARGS ();
+  NS_LOG_LOGIC ("pause");
+  GetImpl ()->Pause ();
+}
+
+void 
+Simulator::Play (void)
+{
+  NS_LOG_FUNCTION_NOARGS ();
+  NS_LOG_LOGIC ("play");
+  GetImpl ()->Play ();
+}
+
+void 
 Simulator::Stop (Time const &delay)
 {
   NS_LOG_FUNCTION (delay);

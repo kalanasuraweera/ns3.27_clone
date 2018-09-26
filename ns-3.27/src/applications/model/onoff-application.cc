@@ -27,6 +27,7 @@
 #include "ns3/inet-socket-address.h"
 #include "ns3/inet6-socket-address.h"
 #include "ns3/packet-socket-address.h"
+#include "ns3/object-vector.h"
 #include "ns3/node.h"
 #include "ns3/nstime.h"
 #include "ns3/data-rate.h"
@@ -41,6 +42,8 @@
 #include "ns3/udp-socket-factory.h"
 #include "ns3/string.h"
 #include "ns3/pointer.h"
+
+#include "ns3/seq-ts-header.h"
 
 namespace ns3 {
 
@@ -59,7 +62,7 @@ OnOffApplication::GetTypeId (void)
                    DataRateValue (DataRate ("500kb/s")),
                    MakeDataRateAccessor (&OnOffApplication::m_cbrRate),
                    MakeDataRateChecker ())
-    .AddAttribute ("PacketSize", "The size of packets sent in on state",
+    .AddAttribute ("PacketSize", "The size of packets sent in on state. No role if 'Packet' above is set",
                    UintegerValue (512),
                    MakeUintegerAccessor (&OnOffApplication::m_pktSize),
                    MakeUintegerChecker<uint32_t> (1))
@@ -116,6 +119,16 @@ OnOffApplication::SetMaxBytes (uint64_t maxBytes)
 {
   NS_LOG_FUNCTION (this << maxBytes);
   m_maxBytes = maxBytes;
+}
+
+void
+OnOffApplication::SetPath (std::vector<uint32_t> path){
+  m_path = path;
+}
+
+void
+OnOffApplication::SetIsTimeStamp (bool IsTimeStamp){
+  m_istimestamp = IsTimeStamp;
 }
 
 Ptr<Socket>
@@ -279,7 +292,44 @@ void OnOffApplication::SendPacket ()
   NS_LOG_FUNCTION (this);
 
   NS_ASSERT (m_sendEvent.IsExpired ());
-  Ptr<Packet> packet = Create<Packet> (m_pktSize);
+
+  Ptr<Packet> packet;
+
+  //std::cout<<"SIZE: "<<m_path.size()<<std::endl;
+
+  if(m_path.size() > 0){
+    //std::cout<<"Writing data"<<std::endl;
+
+
+    // uint8_t temp_arr[m_path.size()];
+      
+    std::string vec_str="";  
+
+    for(int i=0;i<m_path.size();i++){
+      vec_str+=std::to_string(m_path[i]);
+      //std::cout<<"m_path: "<<m_path[i]<<std::endl;
+      if(i<m_path.size()-1) vec_str+=",";
+    }
+    // packet = Create<Packet> (temp_arr, m_pktSize);
+
+    std::string packetInformation = vec_str + ":" + std::to_string(Simulator::Now().GetSeconds());
+    //std::cout<<packetInformation<<std::endl;
+    uint16_t packetSize = packetInformation.length()+1;
+    packet = Create<Packet>((uint8_t*) packetInformation.c_str(), packetSize);
+
+
+  }
+  else{
+    //std::cout<<"Not writing data"<<std::endl;
+    packet = Create<Packet> (m_pktSize);
+  }
+
+  // if(m_istimestamp){
+  //   SeqTsHeader seqTs;
+  //   seqTs.SetSeq (m_totBytes/m_pktSize);
+  //   packet->AddHeader (seqTs);
+  // }
+
   m_txTrace (packet);
   m_socket->Send (packet);
   m_totBytes += m_pktSize;
@@ -305,7 +355,6 @@ void OnOffApplication::SendPacket ()
   m_residualBits = 0;
   ScheduleNextTx ();
 }
-
 
 void OnOffApplication::ConnectionSucceeded (Ptr<Socket> socket)
 {

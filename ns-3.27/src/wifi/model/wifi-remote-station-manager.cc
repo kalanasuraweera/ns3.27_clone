@@ -394,6 +394,10 @@ WifiRemoteStationManager::GetTypeId (void)
                      "The transmission of a data packet has exceeded the maximum number of attempts",
                      MakeTraceSourceAccessor (&WifiRemoteStationManager::m_macTxFinalDataFailed),
                      "ns3::Mac48Address::TracedCallback")
+    .AddTraceSource ("MacReTxRequired",
+                     "The retransmission of a data packet is required",
+                     MakeTraceSourceAccessor (&WifiRemoteStationManager::m_macReTxDataRequired),
+                     "ns3::Mac48Address::TracedCallback")
   ;
   return tid;
 }
@@ -1002,6 +1006,12 @@ WifiRemoteStationManager::ReportFinalDataFailed (Mac48Address address, const Wif
 }
 
 void
+WifiRemoteStationManager::ReportReTxData (Mac48Address address, Ptr<const Packet> packet)
+{
+  m_macReTxDataRequired(address,packet);
+}
+
+void
 WifiRemoteStationManager::ReportRxOk (Mac48Address address, const WifiMacHeader *header,
                                       double rxSnr, WifiMode txMode)
 {
@@ -1163,6 +1173,9 @@ WifiRemoteStationManager::NeedRtsRetransmission (Mac48Address address, const Wif
   WifiRemoteStation *station = Lookup (address, header);
   bool normally = station->m_ssrc < GetMaxSsrc ();
   NS_LOG_DEBUG ("WifiRemoteStationManager::NeedDataRetransmission count: " << station->m_ssrc << " result: " << std::boolalpha << normally);
+
+  ReportReTxData(address,packet);
+
   return DoNeedRtsRetransmission (station, packet, normally);
 }
 

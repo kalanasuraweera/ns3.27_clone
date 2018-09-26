@@ -42,4 +42,16 @@ SimulatorImpl::GetTypeId (void)
   return tid;
 }
 
+void 
+SimulatorImpl::Pause (void)
+{
+  return;
+}
+
+void 
+SimulatorImpl::Play (void)
+{
+  return;
+}
+
 } // namespace ns3

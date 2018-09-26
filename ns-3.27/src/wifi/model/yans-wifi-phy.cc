@@ -72,6 +72,14 @@ YansWifiPhy::SetChannel (const Ptr<YansWifiChannel> channel)
   m_channel->Add (this);
 }
 
+std::vector<uint8_t>
+YansWifiPhy::GetOperationalChannelList () const
+{
+  std::vector<uint8_t> channelList;
+  channelList.push_back (GetChannelNumber());
+  return channelList;
+}
+
 void
 YansWifiPhy::StartTx (Ptr<Packet> packet, WifiTxVector txVector, Time txDuration)
 {

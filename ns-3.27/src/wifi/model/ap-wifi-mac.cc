@@ -74,6 +74,9 @@ ApWifiMac::GetTypeId (void)
                    BooleanValue (true),
                    MakeBooleanAccessor (&ApWifiMac::m_disableRifs),
                    MakeBooleanChecker ())
+    .AddTraceSource ("ProbeRequest", "Got Probe Request from STA.",
+                     MakeTraceSourceAccessor (&ApWifiMac::m_probeRequestLogger),
+                     "ns3::Mac48Address::TracedCallback")
   ;
   return tid;
 }
@@ -866,6 +869,7 @@ ApWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
       if (hdr->IsProbeReq ())
         {
           NS_ASSERT (hdr->GetAddr1 ().IsBroadcast ());
+          m_probeRequestLogger (from);
           SendProbeResp (from);
           return;
         }
@@ -873,6 +877,13 @@ ApWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
         {
           if (hdr->IsAssocReq ())
             {
+              if(isBlacklisted (hdr->GetAddr2 ()))
+              {
+                NS_LOG_DEBUG("Rejecting assoc request from "<<hdr->GetAddr2 ());
+                SendAssocResp (hdr->GetAddr2 (), false);
+                return;
+              }
+              
               //first, verify that the the station's supported
               //rate set is compatible with our Basic Rate set
               MgtAssocRequestHeader assocReq;
@@ -1174,6 +1185,27 @@ ApWifiMac::GetRifsMode (void) const
       m_stationManager->SetRifsPermitted (false);
     }
   return rifsMode;
+}
+
+void
+ApWifiMac::addToBlacklist(Mac48Address macAddr){
+  m_blacklistSTA[macAddr] = true;
+}
+
+bool
+ApWifiMac::isBlacklisted (Mac48Address macAddr)
+{
+  return (m_blacklistSTA.find(macAddr) != m_blacklistSTA.end() );
+}
+
+void
+ApWifiMac::clearBlacklist(){
+  m_blacklistSTA.clear();
+}
+
+void
+ApWifiMac::removeFromBlacklist(Mac48Address macAddr){
+  m_blacklistSTA.erase(macAddr);
 }
 
 } //namespace ns3

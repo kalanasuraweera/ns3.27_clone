@@ -2146,6 +2146,10 @@ MacLow::SendAckAfterData (Mac48Address source, Time duration, WifiMode dataTxMod
   // minus the time to transmit the ACK frame and its SIFS interval
   duration -= GetAckDuration (ackTxVector);
   duration -= GetSifs ();
+  if(!duration.IsPositive()){
+    duration = Time(0.0);
+    std::cout<<"ACK duration negative, setting to: "<<duration<<std::endl;
+  }
   NS_ASSERT_MSG (duration.IsPositive (), "Please provide test case to maintainers if this assert is hit.");
   ack.SetDuration (duration);
 

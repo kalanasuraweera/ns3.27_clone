@@ -61,6 +61,7 @@ DefaultSimulatorImpl::DefaultSimulatorImpl ()
 {
   NS_LOG_FUNCTION (this);
   m_stop = false;
+  m_pause = false;
   // uids are allocated from 4.
   // uid 0 is "invalid" events
   // uid 1 is "now" events
@@ -199,6 +200,10 @@ DefaultSimulatorImpl::Run (void)
 
   while (!m_events->IsEmpty () && !m_stop) 
     {
+      std::unique_lock<std::mutex> lk(m);
+      while(m_pause){
+          cv.wait(lk);
+      }
       ProcessOneEvent ();
     }
 
@@ -212,6 +217,25 @@ DefaultSimulatorImpl::Stop (void)
 {
   NS_LOG_FUNCTION (this);
   m_stop = true;
+}
+
+void 
+DefaultSimulatorImpl::Pause (void)
+{
+  std::cout<<"Pause"<<std::endl;
+  NS_LOG_FUNCTION (this);
+  m_pause = true;
+}
+
+void 
+DefaultSimulatorImpl::Play (void)
+{
+  std::cout<<"Play"<<std::endl;
+  NS_LOG_FUNCTION (this);
+  //std::unique_lock<std::mutex> lk(m);
+  m_pause = false;
+  cv.notify_one();
+  std::cout<<"Notified"<<std::endl;
 }
 
 void 
